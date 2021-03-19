@@ -34,9 +34,9 @@ public class AutoAnchorsEditor : Editor
 
     private static void ResetOffsetAndPivot(RectTransform rectTrans)
     {
+        Vector2 centerPivot = new Vector2(0.5f, 0.5f);
         rectTrans.offsetMin = Vector2.zero;
         rectTrans.offsetMax = Vector2.zero;
-        Vector2 centerPivot = new Vector2(0.5f, 0.5f);
         rectTrans.pivot = centerPivot;
         rectTrans.pivot = centerPivot;
     }
@@ -49,7 +49,7 @@ public class AutoAnchorsEditor : Editor
         return (gridLayoutGroup != null || verticalLayoutGroup != null || horizontalLayoutGroup != null);
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects")]
+    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects _F1")]
     private static void AnchorSelectedObjects()
     {
         RectTransform[] rectTransforms = Selection.gameObjects.Select(x => x.GetComponent<RectTransform>()).ToArray();
@@ -61,7 +61,7 @@ public class AutoAnchorsEditor : Editor
         }
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On All Game Objects")]
+    [MenuItem("Neutron/UI Tools/Auto Anchors On All Game Objects _F2")]
     private static void AnchorAll()
     {
         RectTransform[] rectTransforms = GameObject.FindObjectsOfType<RectTransform>();
@@ -73,7 +73,7 @@ public class AutoAnchorsEditor : Editor
         }
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects And Match")]
+    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects And Match _F3")]
     private static void Match()
     {
         RectTransform[] rectTransforms = Selection.gameObjects.Select(x => x.GetComponent<RectTransform>()).ToArray();
