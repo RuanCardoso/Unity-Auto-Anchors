@@ -1,3 +1,17 @@
+/*===========================================================
+    Author: Ruan Cardoso
+    -
+    Country: Brazil(Brasil)
+    -
+    Contact: cardoso.ruan050322@gmail.com
+    -
+    Support: neutron050322@gmail.com
+    -
+    Unity Minor Version: 2021.3 LTS
+    -
+    License: Open Source (MIT)
+    ===========================================================*/
+
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
@@ -5,75 +19,83 @@ using UnityEngine.UI;
 
 public class AutoAnchorsEditor : Editor
 {
-    private static void Anchor(RectTransform rectTrans)
+    private static void Anchor(RectTransform rect)
     {
-        RectTransform parentRectTrans = null;
-        if (rectTrans.transform.parent != null)
-            parentRectTrans = rectTrans.transform.parent.GetComponent<RectTransform>();
-
-        if (parentRectTrans == null)
-            return;
-        else if (IsDriven(parentRectTrans))
-            return;
-
-        Undo.RecordObject(rectTrans, "Auto Anchor Object");
-        Rect pRect = parentRectTrans.rect;
-        if (rectTrans.localScale != Vector3.one)
-            Debug.LogError($"The Scale of the object cannot be different from {Vector3.one} Tip: Do not scale UI objects, use the \"Rect Tool\" instead of the \"Scale Tool\"");
-        else
+        if (rect.transform.parent != null)
         {
-            float offsetMinX = rectTrans.offsetMin.x, offsetMaxX = rectTrans.offsetMax.x;
-            float offsetMinY = rectTrans.offsetMin.y, offsetMaxY = rectTrans.offsetMax.y;
-            Vector2 min = new Vector2(rectTrans.anchorMin.x + (offsetMinX / pRect.width), rectTrans.anchorMin.y + (offsetMinY / pRect.height));
-            Vector2 max = new Vector2(rectTrans.anchorMax.x + (offsetMaxX / pRect.width), rectTrans.anchorMax.y + (offsetMaxY / pRect.height));
-            rectTrans.anchorMin = min;
-            rectTrans.anchorMax = max;
-            ResetOffsetAndPivot(rectTrans);
+            if (rect.transform.parent.TryGetComponent(out RectTransform pRectTransform))
+            {
+                if (IsDriven(pRectTransform))
+                    return;
+
+                Undo.RecordObject(rect, "Auto Anchor Editor");
+                if (rect.localScale != Vector3.one)
+                {
+                    float wScale = rect.rect.width * rect.localScale.x;
+                    float yScale = rect.rect.height * rect.localScale.y;
+                    AutoScale(rect, wScale, yScale);
+                    // Fix the aspect ratio.
+                    rect.localScale = Vector3.one;
+                }
+
+                Rect pRect = pRectTransform.rect;
+                float offsetMinX = rect.offsetMin.x, offsetMaxX = rect.offsetMax.x;
+                float offsetMinY = rect.offsetMin.y, offsetMaxY = rect.offsetMax.y;
+
+                Vector2 min = new Vector2(rect.anchorMin.x + (offsetMinX / pRect.width), rect.anchorMin.y + (offsetMinY / pRect.height));
+                Vector2 max = new Vector2(rect.anchorMax.x + (offsetMaxX / pRect.width), rect.anchorMax.y + (offsetMaxY / pRect.height));
+
+                rect.anchorMin = min;
+                rect.anchorMax = max;
+                ResetOffsetAndPivot(rect);
+            }
         }
+    }
+
+    private static void AutoScale(RectTransform rect, float widthScale, float heightScale)
+    {
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, widthScale);
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, heightScale);
     }
 
     private static void ResetOffsetAndPivot(RectTransform rectTrans)
     {
-        Vector2 centerPivot = new Vector2(0.5f, 0.5f);
+        rectTrans.pivot = new Vector2(0.5f, 0.5f);
         rectTrans.offsetMin = Vector2.zero;
         rectTrans.offsetMax = Vector2.zero;
-        rectTrans.pivot = centerPivot;
-        rectTrans.pivot = centerPivot;
     }
 
     private static bool IsDriven(RectTransform transform)
     {
-        var gridLayoutGroup = transform.GetComponent<GridLayoutGroup>();
-        var verticalLayoutGroup = transform.GetComponent<VerticalLayoutGroup>();
-        var horizontalLayoutGroup = transform.GetComponent<HorizontalLayoutGroup>();
-        return (gridLayoutGroup != null || verticalLayoutGroup != null || horizontalLayoutGroup != null);
+        GridLayoutGroup gridLayoutGroup = transform.GetComponent<GridLayoutGroup>();
+        VerticalLayoutGroup verticalLayoutGroup = transform.GetComponent<VerticalLayoutGroup>();
+        HorizontalLayoutGroup horizontalLayoutGroup = transform.GetComponent<HorizontalLayoutGroup>();
+        return gridLayoutGroup != null || verticalLayoutGroup != null || horizontalLayoutGroup != null;
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects _F1")]
+    [MenuItem("UI Tools/Auto Anchors On Selected Game Objects _F1")]
     private static void AnchorSelectedObjects()
     {
         RectTransform[] rectTransforms = Selection.gameObjects.Select(x => x.GetComponent<RectTransform>()).ToArray();
         for (int i = 0; i < rectTransforms.Length; i++)
         {
             RectTransform rectTrans = rectTransforms[i];
-            if (rectTrans != null)
-                Anchor(rectTrans);
+            if (rectTrans != null) Anchor(rectTrans);
         }
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On All Game Objects _F2")]
+    [MenuItem("UI Tools/Auto Anchors On All Game Objects _F2")]
     private static void AnchorAll()
     {
-        RectTransform[] rectTransforms = GameObject.FindObjectsOfType<RectTransform>();
+        RectTransform[] rectTransforms = FindObjectsByType<RectTransform>(FindObjectsSortMode.None);
         for (int i = 0; i < rectTransforms.Length; i++)
         {
             RectTransform rectTrans = rectTransforms[i];
-            if (rectTrans != null)
-                Anchor(rectTrans);
+            if (rectTrans != null) Anchor(rectTrans);
         }
     }
 
-    [MenuItem("Neutron/UI Tools/Auto Anchors On Selected Game Objects And Match _F3")]
+    [MenuItem("UI Tools/Auto Anchors On Selected Game Objects And Match _F3")]
     private static void Match()
     {
         RectTransform[] rectTransforms = Selection.gameObjects.Select(x => x.GetComponent<RectTransform>()).ToArray();
